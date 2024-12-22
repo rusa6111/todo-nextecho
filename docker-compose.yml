@@ -1,0 +1,55 @@
+services:
+  frontend:
+    image: ${IMAGE_REPOSITORY}/frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET}
+    container_name: nextjs_app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    networks:
+      - app-network
+
+  backend:
+    image: ${IMAGE_REPOSITORY}/backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET}
+    container_name: go_echo_api
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=${DOCKER_TARGET}
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    networks:
+      - app-network
+
+  nginx:
+    image: ${IMAGE_REPOSITORY}/nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      target: ${DOCKER_TARGET}
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    environment: 
+      - FRONTEND_HOST=${FRONTEND_HOST}
+      - BACKEND_HOST=${BACKEND_HOST}
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
